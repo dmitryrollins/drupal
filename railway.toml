@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "11.3/php8.4/apache-bookworm/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "apache2-foreground"
