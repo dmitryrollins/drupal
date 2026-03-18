@@ -19,6 +19,21 @@ for conf in /etc/apache2/sites-enabled/*.conf; do
     [ -f "$conf" ] && sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" "$conf"
 done
 
+# ── Runtime MPM safety net ───────────────────────────────────────────────────
+# Belt-and-suspenders: wipe any non-prefork MPM that may have crept back in
+# (apt-get can reset mods-enabled during builds).  Runs every container start.
+echo "Ensuring only mpm_prefork is loaded..."
+rm -f /etc/apache2/mods-enabled/mpm_event.load \
+      /etc/apache2/mods-enabled/mpm_event.conf \
+      /etc/apache2/mods-enabled/mpm_worker.load \
+      /etc/apache2/mods-enabled/mpm_worker.conf
+ln -sf /etc/apache2/mods-available/mpm_prefork.load \
+       /etc/apache2/mods-enabled/mpm_prefork.load 2>/dev/null || true
+ln -sf /etc/apache2/mods-available/mpm_prefork.conf \
+       /etc/apache2/mods-enabled/mpm_prefork.conf 2>/dev/null || true
+echo "Active MPM modules:"
+ls /etc/apache2/mods-enabled/mpm_* 2>/dev/null || echo "  none listed (may be compiled-in)"
+
 # ── Writable directories ─────────────────────────────────────────────────────
 mkdir -p \
     /opt/drupal/web/sites/default/files \
