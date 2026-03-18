@@ -2,6 +2,10 @@
 # Uses the official Drupal image so Railway doesn't need to compile PHP extensions
 FROM drupal:11.3-apache
 
+# Fix Apache MPM conflict: mod_php requires mpm_prefork; disable others
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true && \
+    a2enmod mpm_prefork
+
 # Install additional tools needed for entrypoint
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
