@@ -4,13 +4,20 @@ set -e
 echo "=== Drupal Railway Entrypoint ==="
 
 # ── Port configuration ───────────────────────────────────────────────────────
-# Railway injects $PORT; Apache must listen on it, not hardcoded 80.
+# Railway injects $PORT. We overwrite ports.conf directly instead of using
+# sed (sed can fail silently if the pattern doesn't match exactly).
 PORT="${PORT:-80}"
-echo "Configuring Apache to listen on port $PORT..."
+echo "Configuring Apache on port $PORT..."
 
-sed -i "s/Listen 80$/Listen $PORT/" /etc/apache2/ports.conf
-sed -i "s/<VirtualHost \*:80>/<VirtualHost *:$PORT>/" \
-    /etc/apache2/sites-enabled/000-default.conf 2>/dev/null || true
+# Overwrite ports.conf — only listen on $PORT
+cat > /etc/apache2/ports.conf <<EOF
+Listen ${PORT}
+EOF
+
+# Update VirtualHost port in default site if it exists
+for conf in /etc/apache2/sites-enabled/*.conf; do
+    [ -f "$conf" ] && sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" "$conf"
+done
 
 # ── Writable directories ─────────────────────────────────────────────────────
 mkdir -p \
@@ -22,9 +29,5 @@ chown -R www-data:www-data \
     /opt/drupal/private \
     /opt/drupal/config/sync
 
-# ── Start Apache ─────────────────────────────────────────────────────────────
-# Drupal's web installer at /core/install.php handles first-time setup.
-# Add a PostgreSQL service in Railway, set the DB env vars, then visit
-# your Railway URL to complete the Drupal install wizard.
 echo "Starting Apache on port $PORT..."
 exec "$@"

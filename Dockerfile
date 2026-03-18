@@ -32,7 +32,5 @@ RUN chmod +x /entrypoint.sh && \
     chown -R www-data:www-data /opt/drupal/web/sites/default/files && \
     chmod 775 /opt/drupal/web/sites/default/files
 
-EXPOSE 80
-
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["apache2-foreground"]
