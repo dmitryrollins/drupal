@@ -39,6 +39,20 @@ mkdir -p \
     /opt/drupal/web/sites/default/files \
     /opt/drupal/private \
     /opt/drupal/config/sync
+
+# settings.php must be writable by www-data so the Drupal installer can write
+# the database config into it during setup (Drupal resets it to 444 after).
+SETTINGS=/opt/drupal/web/sites/default/settings.php
+SITES_DIR=/opt/drupal/web/sites/default
+
+chown www-data:www-data "$SITES_DIR"
+chmod 755 "$SITES_DIR"
+
+if [ -f "$SETTINGS" ]; then
+    chown www-data:www-data "$SETTINGS"
+    chmod 666 "$SETTINGS"
+fi
+
 chown -R www-data:www-data \
     /opt/drupal/web/sites/default/files \
     /opt/drupal/private \
